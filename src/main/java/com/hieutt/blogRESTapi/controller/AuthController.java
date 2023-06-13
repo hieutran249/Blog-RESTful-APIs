@@ -4,6 +4,7 @@ import com.hieutt.blogRESTapi.dto.JwtAuthResponse;
 import com.hieutt.blogRESTapi.dto.RegisterDto;
 import com.hieutt.blogRESTapi.dto.SignInDto;
 import com.hieutt.blogRESTapi.security.AuthenticationService;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,12 +21,12 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<JwtAuthResponse> register(@RequestBody RegisterDto registerDto) {
+    public ResponseEntity<JwtAuthResponse> register(@RequestBody @Valid RegisterDto registerDto) {
         return ResponseEntity.ok(authenticationService.register(registerDto));
     }
 
     @PostMapping("/signin")
-    public ResponseEntity<JwtAuthResponse> signIn(@RequestBody SignInDto signInDto) {
+    public ResponseEntity<JwtAuthResponse> signIn(@RequestBody @Valid SignInDto signInDto) {
         return ResponseEntity.ok(authenticationService.signIn(signInDto));
     }
 }

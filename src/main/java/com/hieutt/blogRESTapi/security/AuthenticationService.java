@@ -5,7 +5,9 @@ import com.hieutt.blogRESTapi.dto.RegisterDto;
 import com.hieutt.blogRESTapi.dto.SignInDto;
 import com.hieutt.blogRESTapi.entity.Role;
 import com.hieutt.blogRESTapi.entity.User;
+import com.hieutt.blogRESTapi.exception.BlogAPIException;
 import com.hieutt.blogRESTapi.repository.UserRepository;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -27,22 +29,25 @@ public class AuthenticationService {
     }
 
     public JwtAuthResponse register(RegisterDto registerDto) {
-        // create User object
-        User user = User.builder()
-                .firstName(registerDto.getFirstName())
-                .lastName(registerDto.getLastName())
-                .email(registerDto.getEmail())
-                .password(passwordEncoder.encode(registerDto.getPassword()))
-                .role(Role.USER)
-                .build();
+        if (registerDto.getPassword().equals(registerDto.getConfirmPassword())) {
+            // create User object
+            User user = User.builder()
+                    .firstName(registerDto.getFirstName())
+                    .lastName(registerDto.getLastName())
+                    .email(registerDto.getEmail())
+                    .password(passwordEncoder.encode(registerDto.getPassword()))
+                    .role(Role.USER)
+                    .build();
 
-        // save User into db
-        userRepository.save(user);
+            // save User into db
+            userRepository.save(user);
 
-        // generate jwt for User
-        String jwt = jwtService.generateToken(user);
+            // generate jwt for User
+            String jwt = jwtService.generateToken(user);
 
-        return JwtAuthResponse.builder().token(jwt).build();
+            return JwtAuthResponse.builder().token(jwt).build();
+
+        } else throw  new BlogAPIException(HttpStatus.BAD_REQUEST, "This password is not the same!");
     }
 
     public JwtAuthResponse signIn(SignInDto signInDto) {
