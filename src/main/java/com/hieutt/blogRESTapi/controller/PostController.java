@@ -7,6 +7,7 @@ import com.hieutt.blogRESTapi.utils.AppConstants;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -21,8 +22,9 @@ public class PostController {
 //    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
     public ResponseEntity<PostDto> createPost(@Valid @RequestBody PostDto postDto,
-                                              @RequestParam(value = "categories") String categories) {
-        return new ResponseEntity<>(postService.createPost(postDto, categories), HttpStatus.CREATED);
+                                              @RequestParam(value = "categories") String categories,
+                                              Authentication authentication) {
+        return new ResponseEntity<>(postService.createPost(postDto, categories, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping

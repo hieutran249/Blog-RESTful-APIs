@@ -11,6 +11,8 @@ import com.hieutt.blogRESTapi.repository.UserRepository;
 import com.hieutt.blogRESTapi.service.CommentService;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -21,7 +23,6 @@ public class CommentServiceImpl implements CommentService {
     private final CommentRepository commentRepository;
     private final PostRepository postRepository;
     private final UserRepository userRepository;
-
     private final ModelMapper mapper;
 
     public CommentServiceImpl(CommentRepository commentRepository, PostRepository postRepository, UserRepository userRepository, ModelMapper mapper) {
@@ -32,7 +33,7 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto createComment(Long postId, CommentDto commentDto) {
+    public CommentDto createComment(Long postId, CommentDto commentDto, Authentication authentication) {
         // convert DTO into Entity
         Comment comment = mapToEntity(commentDto);
 
@@ -41,8 +42,12 @@ public class CommentServiceImpl implements CommentService {
                 () -> new ResourceNotFoundException("Post", "id", postId)
         );
 
-        // temporary user
-        comment.setUser(userRepository.findById(1L).get());
+        // get the principle of the current logged-in user
+        UserDetails currentUserPrinciple = (UserDetails) authentication.getPrincipal();
+        // get the email of the current user
+        String email = currentUserPrinciple.getUsername();
+        // set the current User
+        comment.setUser(userRepository.findByEmail(email).get());
 
         // set Post to Comment entity
         comment.setPost(post);

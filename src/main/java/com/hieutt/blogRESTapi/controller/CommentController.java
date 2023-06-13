@@ -5,6 +5,7 @@ import com.hieutt.blogRESTapi.service.CommentService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -21,9 +22,10 @@ public class CommentController {
     @PostMapping("/posts/{id}/comments")
     public ResponseEntity<CommentDto> createComment(
             @PathVariable(name = "id") Long postId,
-            @Valid @RequestBody CommentDto commentDto) {
+            @Valid @RequestBody CommentDto commentDto,
+            Authentication authentication) {
 
-        return new ResponseEntity<>(commentService.createComment(postId, commentDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(commentService.createComment(postId, commentDto, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping("/posts/{id}/comments")
