@@ -2,6 +2,7 @@ package com.hieutt.blogRESTapi.controller;
 
 import com.hieutt.blogRESTapi.dto.CategoryDto;
 import com.hieutt.blogRESTapi.service.CategoryService;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -20,7 +21,7 @@ public class CategoryController {
 
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping
-    public ResponseEntity<CategoryDto> createCategory(@RequestBody CategoryDto categoryDto) {
+    public ResponseEntity<CategoryDto> createCategory(@RequestBody @Valid CategoryDto categoryDto) {
         return new ResponseEntity<>(categoryService.createCategory(categoryDto), HttpStatus.CREATED);
     }
 
@@ -37,7 +38,7 @@ public class CategoryController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @PostMapping("/{id}")
     public ResponseEntity<CategoryDto> updateCategory(@PathVariable(value = "id") Long id,
-                                                   @RequestBody CategoryDto categoryDto) {
+                                                   @RequestBody @Valid CategoryDto categoryDto) {
         return ResponseEntity.ok(categoryService.updateCategory(id, categoryDto));
     }
 
