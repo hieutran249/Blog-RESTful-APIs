@@ -14,6 +14,6 @@ public class CategoryDto {
     private Long id;
 
     @NotEmpty
-    @Size(min = 3, message = "Category name should have at least 2 characters!")
+    @Size(min = 3, message = "Category name should have at least 3 characters!")
     private String name;
 }
