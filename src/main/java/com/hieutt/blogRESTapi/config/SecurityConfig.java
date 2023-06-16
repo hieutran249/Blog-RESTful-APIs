@@ -34,6 +34,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/api/v1/posts/**").permitAll()
                 .and()
                 .authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
+                .and()
+                .authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
