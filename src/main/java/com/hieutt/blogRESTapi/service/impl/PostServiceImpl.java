@@ -53,7 +53,7 @@ public class PostServiceImpl implements PostService {
         // get the email of the current user
         String email = currentUserPrinciple.getUsername();
         // set the current User
-        post.setUser(userRepository.findByEmail(email).get());
+        post.setUser(userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email)));
         
         // save post into DB
         Post newPost = postRepository.save(post);

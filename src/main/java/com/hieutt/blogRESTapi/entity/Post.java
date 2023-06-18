@@ -3,6 +3,7 @@ package com.hieutt.blogRESTapi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -39,7 +40,7 @@ public class Post {
             cascade = CascadeType.ALL,
             orphanRemoval = true
     )
-    private Set<Comment> comments = new HashSet<>();
+    private List<Comment> comments = new ArrayList<>();
 
 
     @ManyToOne(
@@ -66,5 +67,5 @@ public class Post {
                     referencedColumnName = "id"
             )
     )
-    private List<Category> categories;
+    private List<Category> categories = new ArrayList<>();
 }

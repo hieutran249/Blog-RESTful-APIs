@@ -1,6 +1,7 @@
 package com.hieutt.blogRESTapi.dto;
 
 import com.hieutt.blogRESTapi.entity.Category;
+import com.hieutt.blogRESTapi.entity.User;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
@@ -18,6 +19,7 @@ public class PostDto {
 
     @NotEmpty
     private String content;
-    private Set<CommentDto> comments;
+    private UserResponse user;
+    private List<CommentDto> comments;
     private List<Category> categories;
 }
