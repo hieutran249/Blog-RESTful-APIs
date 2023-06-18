@@ -2,6 +2,7 @@ package com.hieutt.blogRESTapi.dto;
 
 import com.hieutt.blogRESTapi.entity.Comment;
 import com.hieutt.blogRESTapi.entity.Post;
+import com.hieutt.blogRESTapi.entity.Role;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -16,4 +17,6 @@ public class UserDto {
     private String lastName;
     private String email;
     private String password;
+    private Role role;
+
 }
