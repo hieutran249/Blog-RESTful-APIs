@@ -1,5 +1,6 @@
 package com.hieutt.blogRESTapi.service.impl;
 
+import com.hieutt.blogRESTapi.dto.FormattedPost;
 import com.hieutt.blogRESTapi.dto.PostDto;
 import com.hieutt.blogRESTapi.dto.PostResponse;
 import com.hieutt.blogRESTapi.entity.Category;
@@ -17,7 +18,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -65,7 +65,7 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse getAllPosts(int pageNo, int pageSize, String sortBy, String sortDir) {
+    public PostResponse getAllPosts(int pageNo, int pageSize, String sortBy, String sortDir, String categories) {
         // Pagination & Sorting
         Sort sort = sortDir.equalsIgnoreCase(Sort.Direction.ASC.name()) ? Sort.by(sortBy).ascending()
                 : Sort.by(sortBy).descending();
@@ -73,7 +73,17 @@ public class PostServiceImpl implements PostService {
         // create Pageable instance
         Pageable pageable = PageRequest.of(pageNo, pageSize, sort);
 
-        Page<Post> posts = postRepository.findAll(pageable);
+        // check if there is any provided categories
+        Page<Post> posts;
+        if (categories.equals("")) {
+            posts = postRepository.findAll(pageable);
+        }
+        // filtering does not work yet
+        else {
+            // convert string param to list
+            List<Category> categoryList = toCategoryList(categories);
+            posts = postRepository.findAllByCategories(categoryList, pageable);
+        }
 
         // get content for page object
         List<Post> postList = posts.getContent();
@@ -128,6 +138,18 @@ public class PostServiceImpl implements PostService {
         );
         post.setCategories(null);
         postRepository.delete(post);
+    }
+
+    @Override
+    public List<FormattedPost> getPostsByUser(Long userId) {
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        List<Post> posts = user.getPosts();
+        return posts.stream()
+                .map(post -> FormattedPost.builder()
+                        .id(post.getId())
+                        .title(post.getTitle())
+                        .build())
+                .collect(Collectors.toList());
     }
 
     // convert Entity into DTO
