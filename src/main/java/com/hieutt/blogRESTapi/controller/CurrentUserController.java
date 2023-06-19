@@ -1,5 +1,6 @@
 package com.hieutt.blogRESTapi.controller;
 
+import com.hieutt.blogRESTapi.dto.PasswordDto;
 import com.hieutt.blogRESTapi.dto.UserDto;
 import com.hieutt.blogRESTapi.service.CurrentUserService;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,13 @@ public class CurrentUserController {
     public ResponseEntity<UserDto> updateCurrentUser(Authentication authentication,
                                                      @RequestBody UserDto userDto) {
         return ResponseEntity.ok(currentUserService.updateCurrentUser(authentication, userDto));
+    }
+
+    @PutMapping("/change_password")
+    public ResponseEntity<String> changePassword(Authentication authentication,
+                                                 @RequestBody PasswordDto passwordDto) {
+        currentUserService.changePassword(authentication, passwordDto);
+        return ResponseEntity.ok("The password has been changed");
     }
 
     @DeleteMapping

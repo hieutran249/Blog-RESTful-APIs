@@ -1,5 +1,6 @@
 package com.hieutt.blogRESTapi.service.impl;
 
+import com.hieutt.blogRESTapi.dto.PasswordDto;
 import com.hieutt.blogRESTapi.dto.UserDto;
 import com.hieutt.blogRESTapi.entity.User;
 import com.hieutt.blogRESTapi.exception.BlogAPIException;
@@ -10,16 +11,21 @@ import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.util.Objects;
 
 @Service
 public class CurrentUserServiceImpl implements CurrentUserService {
     private final UserRepository userRepository;
     private final ModelMapper mapper;
+    private final PasswordEncoder passwordEncoder;
 
-    public CurrentUserServiceImpl(UserRepository userRepository, ModelMapper mapper) {
+    public CurrentUserServiceImpl(UserRepository userRepository, ModelMapper mapper, PasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.mapper = mapper;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -52,6 +58,25 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     public void deleteCurrentUser(Authentication authentication) {
         User currentUser = mapToEntity(getCurrentUser(authentication));
         userRepository.delete(currentUser);
+    }
+
+    @Override
+    public void changePassword(Authentication authentication, PasswordDto passwordDto) {
+        User currentUser = mapToEntity(getCurrentUser(authentication));
+        // check if the provided old password is the same with the password of user
+        if (!passwordEncoder.matches(passwordDto.getCurrentPassword(), currentUser.getPassword())) {
+            throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This is not your current password!");
+        }
+        // check if the confirm password is the same as the new one
+        if (!passwordDto.getNewPassword().equals(passwordDto.getConfirmPassword())) {
+            throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This password is not the same!");
+        }
+        // check if the new password is different from the old one
+        if (passwordDto.getCurrentPassword().equals(passwordDto.getNewPassword())) {
+            throw new BlogAPIException(HttpStatus.BAD_REQUEST, "The old and the new password are the same!");
+        }
+        currentUser.setPassword(passwordEncoder.encode(passwordDto.getNewPassword()));
+        userRepository.save(currentUser);
     }
 
     // convert Entity into DTO
