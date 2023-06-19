@@ -33,8 +33,7 @@ public class User implements UserDetails {
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
+            orphanRemoval = true
     )
     @ToString.Exclude
     private List<Post> posts = new ArrayList<>();
@@ -42,14 +41,17 @@ public class User implements UserDetails {
     @OneToMany(
             mappedBy = "user",
             cascade = CascadeType.ALL,
-            orphanRemoval = true,
-            fetch = FetchType.LAZY
+            orphanRemoval = true
     )
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
 
     @Enumerated(EnumType.STRING)
     private Role role;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "user")
+    private List<Token> tokens;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

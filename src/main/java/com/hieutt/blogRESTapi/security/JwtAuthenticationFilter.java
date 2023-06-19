@@ -1,5 +1,6 @@
 package com.hieutt.blogRESTapi.security;
 
+import com.hieutt.blogRESTapi.repository.TokenRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -29,10 +30,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
+    private final TokenRepository tokenRepository;
 
-    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService) {
+    public JwtAuthenticationFilter(JwtService jwtService, UserDetailsService userDetailsService, TokenRepository tokenRepository) {
         this.jwtService = jwtService;
         this.userDetailsService = userDetailsService;
+        this.tokenRepository = tokenRepository;
     }
 
     @Override
@@ -78,9 +81,12 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             // get UserDetails from the userEmail
             UserDetails userDetails = userDetailsService.loadUserByUsername(userEmail);
-
+            // check if token is revoked and expired and map it into boolean
+            boolean isTokenValid = tokenRepository.findByToken(jwt)
+                    .map(t -> !t.isRevoked() && !t.isExpired())
+                    .orElse(false);
             // validate token
-            if (jwtService.isTokenValid(jwt)) {
+            if (jwtService.isTokenValid(jwt) && isTokenValid) {
                 // Update Security Context
                 UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                     userDetails,null,userDetails.getAuthorities());
