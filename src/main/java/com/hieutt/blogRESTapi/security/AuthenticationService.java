@@ -1,5 +1,6 @@
 package com.hieutt.blogRESTapi.security;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hieutt.blogRESTapi.dto.JwtAuthResponse;
 import com.hieutt.blogRESTapi.dto.RegisterDto;
 import com.hieutt.blogRESTapi.dto.SignInDto;
@@ -10,13 +11,21 @@ import com.hieutt.blogRESTapi.entity.User;
 import com.hieutt.blogRESTapi.exception.BlogAPIException;
 import com.hieutt.blogRESTapi.repository.TokenRepository;
 import com.hieutt.blogRESTapi.repository.UserRepository;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.util.List;
 
 @Service
@@ -51,6 +60,8 @@ public class AuthenticationService {
 
             // generate jwt for User
             String jwt = jwtService.generateToken(user);
+            // generate refresh token
+            String refreshToken = jwtService.generateRefreshToken(user);
 
             // revoke all other tokens before saving new one
             revokeAllUserTokens(user);
@@ -58,7 +69,10 @@ public class AuthenticationService {
             // save Token into db
             saveUserToken(savedUser, jwt);
 
-            return JwtAuthResponse.builder().token(jwt).build();
+            return JwtAuthResponse.builder()
+                    .accessToken(jwt)
+                    .refreshToken(refreshToken)
+                    .build();
 
         } else throw  new BlogAPIException(HttpStatus.BAD_REQUEST, "This password is not the same!");
     }
@@ -79,6 +93,8 @@ public class AuthenticationService {
 
         // generate jwt for User
         String jwt = jwtService.generateToken(user);
+        // generate refresh token
+        String refreshToken = jwtService.generateRefreshToken(user);
 
         // revoke all other tokens before saving new one
         revokeAllUserTokens(user);
@@ -86,7 +102,10 @@ public class AuthenticationService {
         // save Token into db
         saveUserToken(user, jwt);
 
-        return JwtAuthResponse.builder().token(jwt).build();
+        return JwtAuthResponse.builder()
+                .accessToken(jwt)
+                .refreshToken(refreshToken)
+                .build();
     }
 
     private void saveUserToken(User user, String jwt) {
@@ -110,5 +129,39 @@ public class AuthenticationService {
         });
 
         tokenRepository.saveAll(validUserTokens);
+    }
+
+    public void refreshToken(HttpServletRequest request,
+                             HttpServletResponse response) throws IOException {
+        final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final String userEmail;
+        final String refreshToken;
+
+        if (!StringUtils.hasText(authHeader)
+                || !authHeader.startsWith("Bearer ")) {
+            return;
+        }
+        refreshToken = authHeader.substring(7);
+
+        // get userEmail from jwtToken
+        userEmail = jwtService.extractUsername(refreshToken);
+
+        // check if email is null and if user is authenticated yet
+        if (userEmail != null) {
+            // get UserDetails from the userEmail
+            User user = userRepository.findByEmail(userEmail)
+                    .orElseThrow();
+            // validate token
+            if (jwtService.isTokenValid(refreshToken)) {
+                String accessToken = jwtService.generateToken(user);
+                revokeAllUserTokens(user);
+                saveUserToken(user, accessToken);
+                JwtAuthResponse authResponse = JwtAuthResponse.builder()
+                        .accessToken(accessToken)
+                        .refreshToken(refreshToken)
+                        .build();
+                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
+            }
+        }
     }
 }

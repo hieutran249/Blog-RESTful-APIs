@@ -20,11 +20,13 @@ import java.util.function.Function;
 public class JwtService {
 
 
-//    @Value("${app.jwt-secret}")
 //    private static String SECRET_KEY;
-    private static final String SECRET_KEY = "7436773979244226452948404D635166546A576E5A7234753778214125432A46";
-    @Value("${app.jwt-expiration-milliseconds}")
+    @Value("${app.jwt.secret-key}")
+    private String secretKey;
+    @Value("${app.jwt.expiration-milliseconds}")
     private int jwtExpirationInMs;
+    @Value("${app.jwt.refresh-token.expiration-milliseconds}")
+    private int refreshExpirationInMs;
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -44,7 +46,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = Decoders.BASE64.decode(SECRET_KEY);
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
     }
 
@@ -53,14 +55,25 @@ public class JwtService {
     }
 
     public String generateToken(
-            Map<String, Object> extractClaims,
+            Map<String, Object> extraClaims,
             UserDetails userDetails) {
+        return buildToken(extraClaims, userDetails, jwtExpirationInMs);
+    }
+
+    public String generateRefreshToken(UserDetails userDetails) {
+        return buildToken(new HashMap<>(), userDetails, refreshExpirationInMs);
+    }
+
+    private String buildToken(
+            Map<String, Object> extraClaims,
+            UserDetails userDetails,
+            long expiration) {
         return Jwts
                 .builder()
-                .setClaims(extractClaims)
+                .setClaims(extraClaims)
                 .setSubject(userDetails.getUsername())
                 .setIssuedAt(new Date())
-                .setExpiration(new Date(System.currentTimeMillis()  + jwtExpirationInMs))
+                .setExpiration(new Date(System.currentTimeMillis()  + expiration))
                 .signWith(getSignInKey(), SignatureAlgorithm.HS256)
                 .compact();
     }
