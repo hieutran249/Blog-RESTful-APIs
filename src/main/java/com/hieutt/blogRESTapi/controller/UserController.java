@@ -1,10 +1,7 @@
 package com.hieutt.blogRESTapi.controller;
 
 import com.hieutt.blogRESTapi.dto.UserDto;
-import com.hieutt.blogRESTapi.dto.UserResponse;
-import com.hieutt.blogRESTapi.entity.User;
 import com.hieutt.blogRESTapi.service.UserService;
-import org.modelmapper.ModelMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -21,12 +18,12 @@ public class UserController {
     }
 
     @GetMapping("")
-    public ResponseEntity<List<UserResponse>> getAllUsers() {
+    public ResponseEntity<List<UserDto>> getAllUsers() {
         return ResponseEntity.ok(userService.getAllUsers());
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<UserResponse> getUserById(@PathVariable(value = "id") Long id) {
+    public ResponseEntity<UserDto> getUserById(@PathVariable(value = "id") Long id) {
         return ResponseEntity.ok(userService.getUser(id));
     }
 

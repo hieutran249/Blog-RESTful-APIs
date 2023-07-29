@@ -27,7 +27,7 @@ public class CurrentUserController {
         return ResponseEntity.ok(currentUserService.updateCurrentUser(authentication, userDto));
     }
 
-    @PutMapping("/change_password")
+    @PutMapping("/change-password")
     public ResponseEntity<String> changePassword(Authentication authentication,
                                                  @RequestBody PasswordDto passwordDto) {
         currentUserService.changePassword(authentication, passwordDto);

@@ -6,6 +6,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 @Entity
@@ -25,29 +26,62 @@ public class User implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String firstName;
-    private String lastName;
+    private String displayedName;
+    private String username;
     private String email;
     private String password;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+
+    @Enumerated(EnumType.STRING)
+    private Role role;
 
     @OneToMany(
-            mappedBy = "user",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+            mappedBy = "author",
+            cascade = CascadeType.ALL
     )
     @ToString.Exclude
     private List<Post> posts = new ArrayList<>();
 
     @OneToMany(
-            mappedBy = "user",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
+            mappedBy = "author",
+            cascade = CascadeType.ALL
     )
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
 
-    @Enumerated(EnumType.STRING)
-    private Role role;
+    @ManyToMany
+    @JoinTable(
+            name = "user_bookmarks",
+            joinColumns = @JoinColumn(
+                    name = "user_id",
+                    referencedColumnName = "id"
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "post_id",
+                    referencedColumnName = "id"
+            )
+    )
+    private List<Post> bookmarks = new ArrayList<>();
+
+
+    @ManyToMany
+    @JoinTable(
+            name = "user_followers",
+            joinColumns = @JoinColumn(
+                    name = "user_id",
+                    referencedColumnName = "id"
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "follower_id",
+                    referencedColumnName = "id"
+            )
+    )
+    private List<User> followers = new ArrayList<>();
+
+
+    @ManyToMany(mappedBy = "followers")
+    private List<User> followings = new ArrayList<>();
 
     @ToString.Exclude
     @OneToMany(mappedBy = "user")
@@ -88,17 +122,4 @@ public class User implements UserDetails {
         return true;
     }
 
-//    @ManyToMany(fetch = FetchType.EAGER, cascade = CascadeType.ALL)
-//    @JoinTable(
-//            name = "user_roles",
-//            joinColumns = @JoinColumn(
-//                    name = "user_id",
-//                    referencedColumnName = "id"
-//            ),
-//            inverseJoinColumns = @JoinColumn(
-//                    name = "role_id",
-//                    referencedColumnName = "id"
-//            )
-//    )
-//    private Set<Role> roles;
 }

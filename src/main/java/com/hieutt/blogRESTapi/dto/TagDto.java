@@ -12,10 +12,11 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class CategoryDto {
+public class TagDto {
     private Long id;
 
     @NotEmpty
-    @Size(min = 3, message = "Category name should have at least 3 characters!")
+    @Size(min = 3, message = "Tag name should have at least 3 characters!")
     private String name;
+    private int quantity;
 }

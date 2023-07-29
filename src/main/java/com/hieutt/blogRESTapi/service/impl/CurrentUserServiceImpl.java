@@ -43,8 +43,6 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     @Override
     public UserDto updateCurrentUser(Authentication authentication, UserDto userDto) {
         User currentUser = mapToEntity(getCurrentUser(authentication));
-        currentUser.setFirstName(userDto.getFirstName());
-        currentUser.setLastName(userDto.getLastName());
         if (userRepository.existsByEmail(userDto.getEmail()) && !userDto.getEmail().equals(currentUser.getEmail()))
             throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This email already exists!");
         currentUser.setEmail(userDto.getEmail());

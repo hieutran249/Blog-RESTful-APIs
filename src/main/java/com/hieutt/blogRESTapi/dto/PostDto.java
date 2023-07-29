@@ -1,15 +1,19 @@
 package com.hieutt.blogRESTapi.dto;
 
 import com.hieutt.blogRESTapi.entity.Category;
-import com.hieutt.blogRESTapi.entity.User;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
-import java.util.Set;
+import java.time.LocalDateTime;
 
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
+@Builder
 public class PostDto {
     private Long id;
 
@@ -19,7 +23,10 @@ public class PostDto {
 
     @NotEmpty
     private String content;
-    private UserResponse user;
-    private List<CommentDto> comments;
-    private List<Category> categories;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private int view;
+    private int vote;
+    private UserDto author;
+    private CategoryDto category;
 }

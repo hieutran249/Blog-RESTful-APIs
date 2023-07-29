@@ -1,6 +1,5 @@
 package com.hieutt.blogRESTapi.controller;
 
-import com.hieutt.blogRESTapi.dto.FormattedPost;
 import com.hieutt.blogRESTapi.dto.PostDto;
 import com.hieutt.blogRESTapi.dto.PostResponse;
 import com.hieutt.blogRESTapi.service.PostService;
@@ -24,9 +23,9 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostDto> createPost(@Valid @RequestBody PostDto postDto,
-                                              @RequestParam(value = "categories") String categories,
+                                              @RequestParam(value = "tags") String tags,
                                               Authentication authentication) {
-        return new ResponseEntity<>(postService.createPost(postDto, categories, authentication), HttpStatus.CREATED);
+        return new ResponseEntity<>(postService.createPost(postDto, tags, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping
@@ -38,10 +37,9 @@ public class PostController {
             @RequestParam(value = "sortBy", defaultValue = AppConstants.DEFAULT_SORT_BY, required = false)
             String sortBy,
             @RequestParam(value = "sortDir", defaultValue = AppConstants.DEFAULT_SORT_DIRECTION, required = false)
-            String sortDir,
-            @RequestParam(value = "categories", defaultValue = "") String categories
+            String sortDir
     ) {
-        return postService.getAllPosts(pageNo, pageSize, sortBy, sortDir, categories);
+        return postService.getAllPosts(pageNo, pageSize, sortBy, sortDir);
     }
 
     @GetMapping("/{id}")
@@ -50,7 +48,7 @@ public class PostController {
     }
 
     @GetMapping("/user/{id}")
-    public ResponseEntity<List<FormattedPost>> getPostsByUser(@PathVariable(name = "id") Long userId) {
+    public ResponseEntity<List<PostDto>> getPostsByUser(@PathVariable(name = "id") Long userId) {
         return ResponseEntity.ok(postService.getPostsByUser(userId));
     }
 
@@ -58,8 +56,8 @@ public class PostController {
     public ResponseEntity<PostDto> updatePost(
             @Valid @RequestBody PostDto postDto,
             @PathVariable(name = "id") Long postId,
-            @RequestParam(value = "categories") String categories) {
-        return ResponseEntity.ok(postService.updatePost(postDto, postId, categories));
+            @RequestParam(value = "tags") String tags) {
+        return ResponseEntity.ok(postService.updatePost(postDto, postId, tags));
     }
 
     @DeleteMapping("/{id}")

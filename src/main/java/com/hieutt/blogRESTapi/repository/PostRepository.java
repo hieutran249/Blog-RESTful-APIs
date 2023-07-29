@@ -13,6 +13,13 @@ import java.util.List;
 
 @Repository
 public interface PostRepository extends JpaRepository<Post, Long> {
-    @Query("SELECT p FROM Post p WHERE p.categories IN :categories")
-    Page<Post> findAllByCategories(@Param("categories") List<Category> categories, Pageable pageable);
+    Page<Post> findByCategory(Category category, Pageable pageable);
+    @Query(
+            value = "select * from p" +
+                    "inner join post_tags pt on pt.post_id = p.id" +
+                    "inner join tags t on pt.tag_id = t.id" +
+                    "where t.id = ?1",
+            nativeQuery = true
+    )
+    Page<Post> findByTag(Long categoryId, Pageable pageable);
 }

@@ -6,7 +6,7 @@ import org.springframework.security.core.Authentication;
 import java.util.List;
 
 public interface CommentService {
-    CommentDto createComment(Long postId, CommentDto commentDto, Authentication authentication);
+    CommentDto createComment(Long postId, CommentDto commentDto, Long replyCmtId, Authentication authentication);
 
     List<CommentDto> getAllComments(Long postId);
 

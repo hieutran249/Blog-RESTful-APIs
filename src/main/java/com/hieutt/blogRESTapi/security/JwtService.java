@@ -18,8 +18,6 @@ import java.util.function.Function;
 
 @Service
 public class JwtService {
-
-
 //    private static String SECRET_KEY;
     @Value("${app.jwt.secret-key}")
     private String secretKey;
@@ -27,6 +25,8 @@ public class JwtService {
     private int jwtExpirationInMs;
     @Value("${app.jwt.refresh-token.expiration-milliseconds}")
     private int refreshExpirationInMs;
+    @Value("${app.jwt.reset-password-token.expiration-milliseconds}")
+    private int resetPasswordExpirationInMs;
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }
@@ -38,13 +38,14 @@ public class JwtService {
 
     private Claims extractAllClaims(String token) {
         return Jwts
-                .parserBuilder()
-                .setSigningKey(getSignInKey())
+                .parserBuilder() // to create JwtParser
+                .setSigningKey(getSignInKey()) // set sign key to be used to verify JWS. if jwt string is not jws this key will not be used
                 .build()
-                .parseClaimsJws(token)
-                .getBody();
+                .parseClaimsJws(token) // return Jws
+                .getBody(); // get all claims of a jws (json web signature)
     }
 
+    // create a SecretKey instance
     private Key getSignInKey() {
         byte[] keyBytes = Decoders.BASE64.decode(secretKey);
         return Keys.hmacShaKeyFor(keyBytes);
@@ -62,6 +63,10 @@ public class JwtService {
 
     public String generateRefreshToken(UserDetails userDetails) {
         return buildToken(new HashMap<>(), userDetails, refreshExpirationInMs);
+    }
+
+    public String generateResetPassToken(UserDetails userDetails) {
+        return buildToken(new HashMap<>(), userDetails, resetPasswordExpirationInMs);
     }
 
     private String buildToken(

@@ -15,6 +15,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -33,9 +34,19 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto createComment(Long postId, CommentDto commentDto, Authentication authentication) {
+    public CommentDto createComment(Long postId, CommentDto commentDto, Long replyCmtId, Authentication authentication) {
         // convert DTO into Entity
         Comment comment = mapToEntity(commentDto);
+        comment.setCreatedAt(LocalDateTime.now());
+        comment.setVote(0);
+        if (replyCmtId == null) {
+            comment.setReplyToComment(null);
+        }
+        else {
+            Comment replyComment = commentRepository.findById(replyCmtId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", replyCmtId));
+            comment.setReplyToComment(replyComment);
+        }
 
         // retrieve Post entity by id
         Post post = postRepository.findById(postId).orElseThrow(
@@ -47,9 +58,10 @@ public class CommentServiceImpl implements CommentService {
         // get the email of the current user
         String email = currentUserPrinciple.getUsername();
         // set the current User
-        comment.setUser(userRepository.findByEmail(email).get());
+        comment.setAuthor(userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email)));
 
-        // set Post to Comment entity
+        // set Post
         comment.setPost(post);
 
         // save Comment entity to db
@@ -82,7 +94,8 @@ public class CommentServiceImpl implements CommentService {
     public CommentDto updateComment(Long postId, Long commentId, CommentDto commentDto) {
         Comment comment = checkExistence(postId, commentId);
 
-        comment.setBody(commentDto.getBody());
+        comment.setContent(commentDto.getContent());
+        comment.setUpdatedAt(LocalDateTime.now());
 
         Comment updatedComment = commentRepository.save(comment);
 

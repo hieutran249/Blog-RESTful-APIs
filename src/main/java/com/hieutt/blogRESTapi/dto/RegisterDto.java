@@ -15,11 +15,11 @@ import lombok.NoArgsConstructor;
 public class RegisterDto {
     @NotEmpty
     @Size(min = 2, message = "Your firstname should have at least 2 characters!")
-    private String firstName;
+    private String displayedName;
 
     @NotEmpty
     @Size(min = 2, message = "Your firstname should have at least 2 characters!")
-    private String lastName;
+    private String username;
 
     @NotEmpty(message = "Please provide an email!")
     @Email(message = "Please provide a valid email!")

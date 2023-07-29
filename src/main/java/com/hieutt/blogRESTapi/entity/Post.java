@@ -3,6 +3,7 @@ package com.hieutt.blogRESTapi.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -34,38 +35,43 @@ public class Post {
             nullable = false
     )
     private String content;
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
+    private int view = 0;
+    private int vote;
 
-    @OneToMany(
-            mappedBy = "post",
-            cascade = CascadeType.ALL,
-            orphanRemoval = true
-    )
-    private List<Comment> comments = new ArrayList<>();
-
-
-    @ManyToOne(
-            fetch = FetchType.LAZY
-    )
+    @ManyToOne
     @JoinColumn(
             name = "user_id",
             nullable = false
     )
-    private User user;
+    private User author;
 
-    @ManyToMany(
-            fetch = FetchType.EAGER,
+    @ManyToOne
+    @JoinColumn(
+            name = "category_id",
+            nullable = false
+    )
+    private Category category;
+
+    @OneToMany(
+            mappedBy = "post",
             cascade = CascadeType.ALL
     )
+    private List<Comment> comments = new ArrayList<>();
+
+    @ManyToMany
     @JoinTable(
-            name = "post_categories",
+            name = "post_tags",
             joinColumns = @JoinColumn(
                     name = "post_id",
                     referencedColumnName = "id"
             ),
             inverseJoinColumns = @JoinColumn(
-                    name = "category_id",
+                    name = "tag_id",
                     referencedColumnName = "id"
             )
     )
-    private List<Category> categories = new ArrayList<>();
+    private List<Tag> tags = new ArrayList<>();
+
 }

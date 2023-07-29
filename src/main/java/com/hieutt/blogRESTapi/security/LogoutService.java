@@ -1,4 +1,4 @@
-package com.hieutt.blogRESTapi.config;
+package com.hieutt.blogRESTapi.security;
 
 import com.hieutt.blogRESTapi.entity.Token;
 import com.hieutt.blogRESTapi.repository.TokenRepository;

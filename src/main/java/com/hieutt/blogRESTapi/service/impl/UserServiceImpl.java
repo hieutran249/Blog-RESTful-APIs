@@ -1,7 +1,6 @@
 package com.hieutt.blogRESTapi.service.impl;
 
 import com.hieutt.blogRESTapi.dto.UserDto;
-import com.hieutt.blogRESTapi.dto.UserResponse;
 import com.hieutt.blogRESTapi.entity.User;
 import com.hieutt.blogRESTapi.exception.ResourceNotFoundException;
 import com.hieutt.blogRESTapi.repository.UserRepository;
@@ -23,7 +22,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserResponse> getAllUsers() {
+    public List<UserDto> getAllUsers() {
         List<User> users = userRepository.findAll();
 
         return users.stream()
@@ -32,7 +31,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public UserResponse getUser(Long id) {
+    public UserDto getUser(Long id) {
         User user = userRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("User", "id", id));
 
         return mapToDto(user);
@@ -46,13 +45,13 @@ public class UserServiceImpl implements UserService {
     }
 
     // convert Entity into DTO
-    private UserResponse mapToDto(User user) {
+    private UserDto mapToDto(User user) {
         // Mapping using ModelMapper
-        return mapper.map(user, UserResponse.class);
+        return mapper.map(user, UserDto.class);
     }
 
     // convert DTO into Entity
-    private User mapToEntity(UserResponse userResponse) {
+    private User mapToEntity(UserDto userResponse) {
         // Mapping using ModelMapper
         return mapper.map(userResponse, User.class);
     }
