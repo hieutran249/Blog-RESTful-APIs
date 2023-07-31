@@ -3,6 +3,7 @@ package com.hieutt.blogRESTapi.service.impl;
 import com.hieutt.blogRESTapi.dto.CommentDto;
 import com.hieutt.blogRESTapi.entity.Comment;
 import com.hieutt.blogRESTapi.entity.Post;
+import com.hieutt.blogRESTapi.entity.User;
 import com.hieutt.blogRESTapi.exception.BlogAPIException;
 import com.hieutt.blogRESTapi.exception.ResourceNotFoundException;
 import com.hieutt.blogRESTapi.repository.CommentRepository;
@@ -34,18 +35,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto createComment(Long postId, CommentDto commentDto, Long replyCmtId, Authentication authentication) {
+    public CommentDto createComment(Long postId, CommentDto commentDto, Long repliedCmtId, Authentication authentication) {
         // convert DTO into Entity
         Comment comment = mapToEntity(commentDto);
         comment.setCreatedAt(LocalDateTime.now());
-        comment.setVote(0);
-        if (replyCmtId == null) {
+        comment.setLikes(0);
+        if (repliedCmtId == null) {
             comment.setReplyToComment(null);
         }
         else {
-            Comment replyComment = commentRepository.findById(replyCmtId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", replyCmtId));
-            comment.setReplyToComment(replyComment);
+            Comment repliedComment = commentRepository.findById(repliedCmtId)
+                    .orElseThrow(() -> new ResourceNotFoundException("Comment", "id", repliedCmtId));
+            comment.setReplyToComment(repliedComment);
         }
 
         // retrieve Post entity by id
@@ -91,11 +92,29 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public CommentDto updateComment(Long postId, Long commentId, CommentDto commentDto) {
+    public List<CommentDto> getReplyComments(Long postId, Long commentId) {
+        checkExistence(postId, commentId);
+        List<Comment> replyComments = commentRepository.findReplyComments(commentId);
+
+        return replyComments.stream()
+                .map((comment -> mapToDto(comment)))
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public CommentDto updateComment(Long postId, Long commentId, CommentDto commentDto, Authentication authentication) {
+        // get current user
+        User user = getCurrentUser(authentication);
+
+        // check comment existence and get comment
         Comment comment = checkExistence(postId, commentId);
 
-        comment.setContent(commentDto.getContent());
-        comment.setUpdatedAt(LocalDateTime.now());
+        // check if comment belongs to user
+        if (comment.getAuthor().equals(user)) {
+            comment.setContent(commentDto.getContent());
+            comment.setUpdatedAt(LocalDateTime.now());
+        }
+        else throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This comment does not belong to this user");
 
         Comment updatedComment = commentRepository.save(comment);
 
@@ -104,10 +123,18 @@ public class CommentServiceImpl implements CommentService {
     }
 
     @Override
-    public void deleteComment(Long postId, Long commentId) {
+    public void deleteComment(Long postId, Long commentId, Authentication authentication) {
+        // get current user
+        User user = getCurrentUser(authentication);
+
+        // check comment existence and get comment
         Comment comment = checkExistence(postId, commentId);
 
-        commentRepository.delete(comment);
+        // check if comment belongs to user
+        if (comment.getAuthor().equals(user)) {
+            commentRepository.delete(comment);
+        }
+        else throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This comment does not belong to this user");
     }
 
     // convert Entity into DTO
@@ -150,5 +177,12 @@ public class CommentServiceImpl implements CommentService {
         }
 
         return comment;
+    }
+
+    private User getCurrentUser(Authentication authentication) {
+        // get current user
+        String email = authentication.getName();
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("User", "email", email));
     }
 }

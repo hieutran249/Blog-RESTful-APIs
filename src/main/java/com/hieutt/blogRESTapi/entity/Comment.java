@@ -19,7 +19,7 @@ public class Comment {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private int vote;
+    private int likes = 0;
 
     @ManyToOne
     @JoinColumn(name = "post_id", nullable = false)
@@ -30,6 +30,6 @@ public class Comment {
     private User author;
 
     @ManyToOne
-    @JoinColumn(name = "reply_comment_id")
+    @JoinColumn(name = "replied_comment_id")
     private Comment replyToComment;
 }

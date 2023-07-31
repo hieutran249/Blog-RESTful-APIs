@@ -37,8 +37,8 @@ public class Post {
     private String content;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
-    private int view = 0;
-    private int vote;
+    private int views;
+    private int likes;
 
     @ManyToOne
     @JoinColumn(

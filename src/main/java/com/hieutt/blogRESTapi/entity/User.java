@@ -50,7 +50,7 @@ public class User implements UserDetails {
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_bookmarks",
             joinColumns = @JoinColumn(
@@ -64,8 +64,21 @@ public class User implements UserDetails {
     )
     private List<Post> bookmarks = new ArrayList<>();
 
+    @ManyToMany(fetch = FetchType.EAGER)
+    @JoinTable(
+            name = "user_likeds",
+            joinColumns = @JoinColumn(
+                    name = "user_id",
+                    referencedColumnName = "id"
+            ),
+            inverseJoinColumns = @JoinColumn(
+                    name = "post_id",
+                    referencedColumnName = "id"
+            )
+    )
+    private List<Post> likedPosts = new ArrayList<>();
 
-    @ManyToMany
+    @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_followers",
             joinColumns = @JoinColumn(
@@ -80,7 +93,7 @@ public class User implements UserDetails {
     private List<User> followers = new ArrayList<>();
 
 
-    @ManyToMany(mappedBy = "followers")
+    @ManyToMany(mappedBy = "followers", fetch = FetchType.EAGER)
     private List<User> followings = new ArrayList<>();
 
     @ToString.Exclude

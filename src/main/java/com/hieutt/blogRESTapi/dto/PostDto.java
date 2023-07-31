@@ -26,7 +26,7 @@ public class PostDto {
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
     private int view;
-    private int vote;
+    private int like;
     private UserDto author;
     private CategoryDto category;
 }

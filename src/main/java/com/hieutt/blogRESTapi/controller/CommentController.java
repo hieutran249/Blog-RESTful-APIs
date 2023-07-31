@@ -23,10 +23,10 @@ public class CommentController {
     public ResponseEntity<CommentDto> createComment(
             @PathVariable(name = "id") Long postId,
             @Valid @RequestBody CommentDto commentDto,
-            @RequestParam(value = "replyCmtId") Long replyCmtId,
+            @RequestParam(value = "replyCmtId") Long repliedCmtId,
             Authentication authentication) {
 
-        return new ResponseEntity<>(commentService.createComment(postId, commentDto, replyCmtId, authentication), HttpStatus.CREATED);
+        return new ResponseEntity<>(commentService.createComment(postId, commentDto, repliedCmtId, authentication), HttpStatus.CREATED);
     }
 
     @GetMapping("/posts/{id}/comments")
@@ -42,21 +42,31 @@ public class CommentController {
         return ResponseEntity.ok(commentService.getCommentById(postId, commentId));
     }
 
+    @GetMapping("/posts/{postId}/reply-comments/{commentId}")
+    public ResponseEntity<List<CommentDto>> getReplyComments(
+            @PathVariable(value = "postId") Long postId,
+            @PathVariable(value = "commentId") Long commentId
+    ) {
+        return ResponseEntity.ok(commentService.getReplyComments(postId, commentId));
+    }
+
     @PutMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<CommentDto> updateComment(
             @PathVariable(value = "postId") Long postId,
             @PathVariable(value = "commentId") Long commentId,
-            @Valid @RequestBody CommentDto commentDto
+            @Valid @RequestBody CommentDto commentDto,
+            Authentication authentication
     ) {
-        return ResponseEntity.ok(commentService.updateComment(postId, commentId, commentDto));
+        return ResponseEntity.ok(commentService.updateComment(postId, commentId, commentDto, authentication));
     }
 
     @DeleteMapping("/posts/{postId}/comments/{commentId}")
     public ResponseEntity<String> deleteComment(
             @PathVariable(value = "postId") Long postId,
-            @PathVariable(value = "commentId") Long commentId
+            @PathVariable(value = "commentId") Long commentId,
+            Authentication authentication
     ) {
-        commentService.deleteComment(postId, commentId);
+        commentService.deleteComment(postId, commentId, authentication);
         return ResponseEntity.ok("This comment is deleted successfully!");
     }
 }

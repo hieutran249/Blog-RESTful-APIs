@@ -4,6 +4,7 @@ import com.hieutt.blogRESTapi.dto.UserDto;
 import com.hieutt.blogRESTapi.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -32,5 +33,22 @@ public class UserController {
     public ResponseEntity<String> deleteUser(@PathVariable(value = "id") Long id) {
         userService.deleteUser(id);
         return ResponseEntity.ok("This user has been deleted!");
+    }
+
+    @PostMapping("/{userId}/follow")
+    public ResponseEntity<String> followUser(@PathVariable(value = "userId") Long userId,
+                                             Authentication authentication) {
+        String message = userService.followUser(userId, authentication);
+        return ResponseEntity.ok("You just " + message + " this user");
+    }
+
+    @GetMapping("/{userId}/followers")
+    public ResponseEntity<List<UserDto>> getFollowers(@PathVariable(value = "userId") Long userId) {
+        return ResponseEntity.ok(userService.getFollowers(userId));
+    }
+
+    @GetMapping("/{userId}/followings")
+    public ResponseEntity<List<UserDto>> getFollowings(@PathVariable(value = "userId") Long userId) {
+        return ResponseEntity.ok(userService.getFollowings(userId));
     }
 }

@@ -1,9 +1,9 @@
 package com.hieutt.blogRESTapi.utils;
 
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
 public class test {
     public static void main(String[] args) {
-        String tags = "t    s";
-        boolean result = tags.matches("^.*[^a-zA-Z0-9 ].*$");
-        System.out.println(result);
+        System.out.println(new BCryptPasswordEncoder().encode("admin"));
     }
 }

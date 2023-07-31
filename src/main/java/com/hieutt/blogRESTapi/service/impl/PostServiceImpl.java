@@ -13,6 +13,7 @@ import com.hieutt.blogRESTapi.repository.PostRepository;
 import com.hieutt.blogRESTapi.repository.TagRepository;
 import com.hieutt.blogRESTapi.repository.UserRepository;
 import com.hieutt.blogRESTapi.service.PostService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.modelmapper.ModelMapper;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -22,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -49,8 +51,8 @@ public class PostServiceImpl implements PostService {
     public PostDto createPost(PostDto postDto, String tags, Authentication authentication) {
         // convert dto to entity
         Post post = mapToEntity(postDto);
-        post.setView(0);
-        post.setVote(0);
+        post.setViews(0);
+        post.setLikes(0);
         post.setCreatedAt(LocalDateTime.now());
 
         // remove space around the string tags
@@ -113,19 +115,66 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
+    public PostResponse getPostsByUser(int pageNo, int pageSize, String sortBy, String sortDir, Long userId) {
+        Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
+
+        User author = userRepository.findById(userId)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+
+        Page<Post> posts = postRepository.findByAuthor(author, pageable);
+
+        PostResponse postResponse = getPageContent(posts);
+
+        return postResponse;
+    }
+
+    @Override
+    public PostResponse getBookmarksByUser(int pageNo, int pageSize, String sortBy, String sortDir, Long userId) {
+        Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
+
+        Page<Post> posts = postRepository.findBookmarksByAuthor(userId, pageable);
+
+        PostResponse postResponse = getPageContent(posts);
+
+        return postResponse;
+    }
+
+    @Override
+    public PostResponse getPostsByFollowings(int pageNo, int pageSize, String sortBy, String sortDir, Long userId) {
+        Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
+
+        Page<Post> posts = postRepository.findPostsByFollowings(userId, pageable);
+
+        PostResponse postResponse = getPageContent(posts);
+
+        return postResponse;
+    }
+
+    @Override
     public PostDto getPostById(Long id) {
         Post post = postRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("Post", "id", id)
         );
+        post.setViews(post.getViews() + 1);
+        postRepository.save(post);
         return mapToDto(post);
     }
 
     @Override
-    public PostDto updatePost(PostDto postDto, Long id, String tags) {
+    public PostDto updatePost(PostDto postDto, Long id, String tags, Authentication authentication) {
+        // get current user
+        User user = getCurrentUser(authentication);
+
         // get post by id from the db
         Post post = postRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("Post", "id", id)
         );
+
+        // check if post belong to user
+        if (!post.getAuthor().equals(user)) {
+            throw new BlogAPIException(HttpStatus.FORBIDDEN, "This post does not belong to this user");
+        }
+
         post.setTitle(postDto.getTitle());
         post.setContent(postDto.getContent());
         post.setCategory(mapper.map(postDto.getCategory(), Category.class));
@@ -140,23 +189,76 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public void deletePostById(Long id) {
-        Post post = postRepository.findById(id).orElseThrow(
-                () -> new ResourceNotFoundException("Post", "id", id)
+    public void deletePostById(Long postId, Authentication authentication) {
+        // get current user
+        User user = getCurrentUser(authentication);
+
+        Post post = postRepository.findById(postId).orElseThrow(
+                () -> new ResourceNotFoundException("Post", "id", postId)
         );
+
+        // check if post belong to user
+        if (!post.getAuthor().equals(user)) {
+            throw new BlogAPIException(HttpStatus.FORBIDDEN, "This post does not belong to this user");
+        }
+
         postRepository.delete(post);
     }
 
     @Override
-    public List<PostDto> getPostsByUser(Long userId) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
-        List<Post> posts = user.getPosts();
-        return posts.stream()
-                .map(post -> PostDto.builder()
-                        .id(post.getId())
-                        .title(post.getTitle())
-                        .build())
-                .collect(Collectors.toList());
+    public PostResponse searchByTitleOrAuthor(int pageNo, int pageSize, String sortBy, String sortDir, String keyword) {
+        Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
+
+        Page<Post> posts = postRepository.searchByTitleOrAuthor(keyword, pageable);
+
+        PostResponse postResponse = getPageContent(posts);
+
+        return postResponse;
+    }
+
+    @Override
+    public String likePost(Long postId, Authentication authentication) {
+        String message;
+        // get current user
+        User user = getCurrentUser(authentication);
+        Post post = postRepository.findById(postId).orElseThrow(
+                () -> new ResourceNotFoundException("Post", "id", postId)
+        );
+
+        // check if user had liked the post
+        if (postRepository.likedPost(user.getId(), postId) == 1) {
+            post.setLikes(post.getLikes() - 1);
+            postRepository.removeLike(user.getId(), postId);
+            message = "unliked";
+        }
+        else {
+            post.setLikes(post.getLikes() + 1);
+            postRepository.saveLikedPost(user.getId(), postId);
+            message = "liked";
+        }
+        postRepository.save(post);
+        return message;
+    }
+
+    @Override
+    public String bookmarkPost(Long postId, Authentication authentication) {
+        String message;
+        // get current user
+        User user = getCurrentUser(authentication);
+        Post post = postRepository.findById(postId).orElseThrow(
+                () -> new ResourceNotFoundException("Post", "id", postId)
+        );
+
+        // check if user had bookmarked the post
+        if (postRepository.bookmarkedPost(user.getId(), postId) == 1) {
+            postRepository.removeBookmark(user.getId(), postId);
+            message = "unbookmarked";
+        }
+        else {
+            postRepository.saveLikedPost(user.getId(), postId);
+            message = "bookmarked";
+        }
+        return message;
     }
 
     // convert Entity into DTO
@@ -184,12 +286,16 @@ public class PostServiceImpl implements PostService {
                         if (hasNoneAlphabetic(tag))
                             throw new BlogAPIException(HttpStatus.BAD_REQUEST, "Tag name must not have special character");
                         if (tagRepository.existsByName(tag)) {
-                            return tagRepository.findByName(tag);
+                            Tag foundTag = tagRepository.findByName(tag);
+                            foundTag.setQuantity(foundTag.getQuantity() + 1);
+                            tagRepository.save(foundTag);
+                            return foundTag;
                         }
                         else {
                             Tag newTag = Tag.builder()
                                     .name(tag)
                                     .build();
+                            newTag.setQuantity(1);
                             return tagRepository.save(newTag);
                         }
                     })
@@ -206,7 +312,7 @@ public class PostServiceImpl implements PostService {
                         .build();
                 tagList.add(tagRepository.save(newTag));
             }
-        };
+        }
 
         return tagList;
     }
@@ -258,5 +364,12 @@ public class PostServiceImpl implements PostService {
         postResponse.setLast(posts.isLast());
 
         return postResponse;
+    }
+
+    private User getCurrentUser(Authentication authentication) {
+        // get current user
+        String email = authentication.getName();
+        return userRepository.findByEmail(email).orElseThrow(
+                () -> new ResourceNotFoundException("User", "email", email));
     }
 }
