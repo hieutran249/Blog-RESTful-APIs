@@ -36,9 +36,9 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public void refreshToken(HttpServletRequest request,
+    public JwtAuthResponse refreshToken(HttpServletRequest request,
                              HttpServletResponse response) throws IOException {
-        authenticationService.refreshToken(request, response);
+        return authenticationService.refreshToken(request, response);
     }
 
     @PostMapping("/forgot-password")

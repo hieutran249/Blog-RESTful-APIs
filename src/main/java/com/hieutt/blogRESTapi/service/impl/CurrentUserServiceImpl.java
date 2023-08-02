@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.Objects;
 
 @Service
@@ -29,23 +30,30 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     }
 
     @Override
-    public UserDto getCurrentUser(Authentication authentication) {
-        // get the principle of the current logged-in user
-        UserDetails currentUserPrinciple = (UserDetails) authentication.getPrincipal();
-        // get the email of the current user
-        String email = currentUserPrinciple.getUsername();
-        // get current user from db
-        User currentUser = userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
-
-        return mapToDto(currentUser);
+    public UserDto getCurrentUserDto(Authentication authentication) {
+        return mapToDto(getCurrentUser(authentication));
     }
 
     @Override
     public UserDto updateCurrentUser(Authentication authentication, UserDto userDto) {
-        User currentUser = mapToEntity(getCurrentUser(authentication));
+        User currentUser = getCurrentUser(authentication);
         if (userRepository.existsByEmail(userDto.getEmail()) && !userDto.getEmail().equals(currentUser.getEmail()))
             throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This email already exists!");
-        currentUser.setEmail(userDto.getEmail());
+
+        if (Objects.nonNull(userDto.getDisplayedName()) &&
+                !"".equalsIgnoreCase(userDto.getDisplayedName())) {
+            currentUser.setDisplayedName(userDto.getDisplayedName());
+        }
+        if (Objects.nonNull(userDto.getUsername()) &&
+                !"".equalsIgnoreCase(userDto.getUsername())) {
+            currentUser.setUsername(userDto.getUsername());
+        }
+        if (Objects.nonNull(userDto.getEmail()) &&
+                !"".equalsIgnoreCase(userDto.getEmail())) {
+            currentUser.setUsername(userDto.getEmail());
+        }
+
+        currentUser.setUpdatedAt(LocalDateTime.now());
 
         userRepository.save(currentUser);
 
@@ -54,13 +62,13 @@ public class CurrentUserServiceImpl implements CurrentUserService {
 
     @Override
     public void deleteCurrentUser(Authentication authentication) {
-        User currentUser = mapToEntity(getCurrentUser(authentication));
+        User currentUser = getCurrentUser(authentication);
         userRepository.delete(currentUser);
     }
 
     @Override
     public void changePassword(Authentication authentication, PasswordDto passwordDto) {
-        User currentUser = mapToEntity(getCurrentUser(authentication));
+        User currentUser = getCurrentUser(authentication);
         // check if the provided old password is the same with the password of user
         if (!passwordEncoder.matches(passwordDto.getCurrentPassword(), currentUser.getPassword())) {
             throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This is not your current password!");
@@ -87,5 +95,14 @@ public class CurrentUserServiceImpl implements CurrentUserService {
     private User mapToEntity(UserDto userDto) {
         // Mapping using ModelMapper
         return mapper.map(userDto, User.class);
+    }
+
+    private User getCurrentUser(Authentication authentication) {
+        // get the principle of the current logged-in user
+        UserDetails currentUserPrinciple = (UserDetails) authentication.getPrincipal();
+        // get the email of the current user
+        String email = currentUserPrinciple.getUsername();
+        // get current user from db
+        return userRepository.findByEmail(email).orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 }

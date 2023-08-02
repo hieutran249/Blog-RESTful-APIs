@@ -35,7 +35,7 @@ public class UserController {
         return ResponseEntity.ok("This user has been deleted!");
     }
 
-    @PostMapping("/{userId}/follow")
+    @PutMapping("/{userId}/follow")
     public ResponseEntity<String> followUser(@PathVariable(value = "userId") Long userId,
                                              Authentication authentication) {
         String message = userService.followUser(userId, authentication);

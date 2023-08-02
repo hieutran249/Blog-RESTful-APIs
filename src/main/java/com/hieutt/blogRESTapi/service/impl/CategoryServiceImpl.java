@@ -11,6 +11,7 @@ import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -50,7 +51,10 @@ public class CategoryServiceImpl implements CategoryService {
     public CategoryDto updateCategory(Long id, CategoryDto categoryDto) {
         Category category = categoryRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Category", "id", id));
-        category.setName(categoryDto.getName());
+        if (Objects.nonNull(categoryDto.getName()) &&
+                !"".equalsIgnoreCase(categoryDto.getName())) {
+            category.setName(categoryDto.getName());
+        }
         Category updatedCategory = categoryRepository.save(category);
         return mapToDto(updatedCategory);
     }

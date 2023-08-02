@@ -26,6 +26,5 @@ public class CommentDto {
     private int vote;
     private PostDto post;
     private UserDto author;
-    private Comment replyToComment;
-
+    private CommentDto replyToComment;
 }

@@ -25,7 +25,7 @@ public class PostController {
 
     @PostMapping
     public ResponseEntity<PostDto> createPost(@Valid @RequestBody PostDto postDto,
-                                              @RequestParam(value = "tags") String tags,
+                                              @RequestParam(value = "tags", required = false) String tags,
                                               Authentication authentication) {
         return new ResponseEntity<>(postService.createPost(postDto, tags, authentication), HttpStatus.CREATED);
     }
@@ -70,11 +70,6 @@ public class PostController {
             String sortDir,
             @PathVariable(value = "tagId") Long tagId) {
         return postService.getPostsByTag(pageNo, pageSize, sortBy, sortDir, tagId);
-    }
-
-    @GetMapping("/{id}")
-    public ResponseEntity<PostDto> getPostById(@PathVariable(name = "id") Long postId) {
-        return ResponseEntity.ok(postService.getPostById(postId));
     }
 
     @GetMapping("/user/{userId}")
@@ -122,11 +117,16 @@ public class PostController {
         return postService.getPostsByFollowings(pageNo, pageSize, sortBy, sortDir, userId);
     }
 
+    @GetMapping("/{id}")
+    public ResponseEntity<PostDto> getPostById(@PathVariable(name = "id") Long postId) {
+        return ResponseEntity.ok(postService.getPostById(postId));
+    }
+
     @PutMapping("/{id}")
     public ResponseEntity<PostDto> updatePost(
             @Valid @RequestBody PostDto postDto,
             @PathVariable(name = "id") Long postId,
-            @RequestParam(value = "tags") String tags,
+            @RequestParam(value = "tags", required = false) String tags,
             Authentication authentication
     ) {
         return ResponseEntity.ok(postService.updatePost(postDto, postId, tags, authentication));
@@ -153,14 +153,14 @@ public class PostController {
         return postService.searchByTitleOrAuthor(pageNo, pageSize, sortBy, sortDir, keyword);
     }
 
-    @PostMapping("/{postId}/like")
+    @PutMapping("/{postId}/like")
     public ResponseEntity<String> likePost(@PathVariable Long postId,
                          Authentication authentication) {
         String message = postService.likePost(postId, authentication);
         return ResponseEntity.ok("You just " + message + " successfully!");
     }
 
-    @PostMapping("/{postId}/bookmark")
+    @PutMapping("/{postId}/bookmark")
     public ResponseEntity<String> bookmarkPost(@PathVariable Long postId,
                          Authentication authentication) {
         String message = postService.bookmarkPost(postId, authentication);

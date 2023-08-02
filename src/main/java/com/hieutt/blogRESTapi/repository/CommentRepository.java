@@ -13,7 +13,7 @@ public interface CommentRepository extends JpaRepository<Comment, Long> {
     List<Comment> findByPostId(Long postId);
 
     @Query(
-            value = "select * from Comment c" +
+            value = "select * from Comments c " +
                     "where c.replied_comment_id = ?1",
             nativeQuery = true
     )

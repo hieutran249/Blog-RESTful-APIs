@@ -5,7 +5,7 @@ import com.hieutt.blogRESTapi.dto.UserDto;
 import org.springframework.security.core.Authentication;
 
 public interface CurrentUserService {
-    UserDto getCurrentUser(Authentication authentication);
+    UserDto getCurrentUserDto(Authentication authentication);
 
     UserDto updateCurrentUser(Authentication authentication, UserDto userDto);
 

@@ -2,14 +2,17 @@ package com.hieutt.blogRESTapi.service.impl;
 
 import com.hieutt.blogRESTapi.dto.UserDto;
 import com.hieutt.blogRESTapi.entity.User;
+import com.hieutt.blogRESTapi.exception.BlogAPIException;
 import com.hieutt.blogRESTapi.exception.ResourceNotFoundException;
 import com.hieutt.blogRESTapi.repository.UserRepository;
 import com.hieutt.blogRESTapi.service.UserService;
 import org.modelmapper.ModelMapper;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -54,17 +57,20 @@ public class UserServiceImpl implements UserService {
         // get user that is going to be followed
         User followedUser = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
+        if (user.equals(followedUser)) throw new BlogAPIException(HttpStatus.BAD_REQUEST, "You cannot follow yourself!");
+
         // check if user had followed the user
-        if (userRepository.followedUser(followedUser.getId(), user.getId()) == 1) {
+        if (Objects.equals(userRepository.followedUser(followedUser.getId(), user.getId()), "1")) {
             user.getFollowings().remove(followedUser);
             followedUser.getFollowers().remove(user);
-            userRepository.unfollowUser(followedUser.getId(), user.getId());
+//            userRepository.unfollowUser(followedUser.getId(), user.getId());
             message = "unfollowed";
         }
         else {
             user.getFollowings().add(followedUser);
             followedUser.getFollowers().add(user);
-            userRepository.saveFollower(followedUser.getId(), user.getId());
+            System.out.println("saved");
+//            userRepository.saveFollower(followedUser.getId(), user.getId());
             message = "followed";
         }
         userRepository.save(user);
@@ -75,9 +81,14 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getFollowers(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        List<User> followers = userRepository.findFollowers(userId);
+        // using query
+//        List<User> followers = userRepository.findFollowers(userId);
+
+        // using getter
+        List<User> followers = user.getFollowers();
+
         return followers.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
@@ -85,10 +96,15 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<UserDto> getFollowings(Long userId) {
-        userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
+        User user = userRepository.findById(userId).orElseThrow(() -> new ResourceNotFoundException("User", "id", userId));
 
-        List<User> followers = userRepository.findFollowings(userId);
-        return followers.stream()
+        // using query
+//        List<User> followings = userRepository.findFollowings(userId);
+
+        // using getter
+        List<User> followings = user.getFollowings();
+
+        return followings.stream()
                 .map(this::mapToDto)
                 .collect(Collectors.toList());
     }

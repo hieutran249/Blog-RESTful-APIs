@@ -29,6 +29,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -55,12 +56,14 @@ public class PostServiceImpl implements PostService {
         post.setLikes(0);
         post.setCreatedAt(LocalDateTime.now());
 
-        // remove space around the string tags
-        tags = tags.trim();
+        if (tags != null) {
+            // remove space around the string tags
+            tags = tags.trim();
 
-        // convert tags from string to list and set tags
-        List<Tag> tagList = toTagList(tags);
-        post.setTags(tagList);
+            // convert tags from string to list and set tags
+            List<Tag> tagList = toTagList(tags);
+            post.setTags(tagList);
+        }
 
         // get the principle of the current logged-in user
         UserDetails currentUserPrinciple = (UserDetails) authentication.getPrincipal();
@@ -175,14 +178,7 @@ public class PostServiceImpl implements PostService {
             throw new BlogAPIException(HttpStatus.FORBIDDEN, "This post does not belong to this user");
         }
 
-        post.setTitle(postDto.getTitle());
-        post.setContent(postDto.getContent());
-        post.setCategory(mapper.map(postDto.getCategory(), Category.class));
-        post.setUpdatedAt(LocalDateTime.now());
-
-        // convert String to List
-        List<Tag> tagList = toTagList(tags);
-        post.setTags(tagList);
+        update(post, postDto, tags);
 
         Post updatedPost = postRepository.save(post);
         return mapToDto(updatedPost);
@@ -209,6 +205,8 @@ public class PostServiceImpl implements PostService {
     public PostResponse searchByTitleOrAuthor(int pageNo, int pageSize, String sortBy, String sortDir, String keyword) {
         Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
 
+        keyword = removeRedundantChars(keyword.trim());
+
         Page<Post> posts = postRepository.searchByTitleOrAuthor(keyword, pageable);
 
         PostResponse postResponse = getPageContent(posts);
@@ -226,7 +224,7 @@ public class PostServiceImpl implements PostService {
         );
 
         // check if user had liked the post
-        if (postRepository.likedPost(user.getId(), postId) == 1) {
+        if (Objects.equals(postRepository.likedPost(user.getId(), postId), "1")) {
             post.setLikes(post.getLikes() - 1);
             postRepository.removeLike(user.getId(), postId);
             message = "unliked";
@@ -250,12 +248,12 @@ public class PostServiceImpl implements PostService {
         );
 
         // check if user had bookmarked the post
-        if (postRepository.bookmarkedPost(user.getId(), postId) == 1) {
+        if (Objects.equals(postRepository.bookmarkedPost(user.getId(), postId), "1")) {
             postRepository.removeBookmark(user.getId(), postId);
             message = "unbookmarked";
         }
         else {
-            postRepository.saveLikedPost(user.getId(), postId);
+            postRepository.saveBookmarkedPost(user.getId(), postId);
             message = "bookmarked";
         }
         return message;
@@ -276,7 +274,7 @@ public class PostServiceImpl implements PostService {
     // convert categories parameter into a List
     private List<Tag> toTagList(String tags) {
         List<Tag> tagList = new ArrayList<>();
-        tags = removeRedundantChar(tags);
+        tags = removeRedundantChars(tags);
 
         if (tags.contains(",") ) {
             String[] tagArr = tags.split(",");
@@ -322,7 +320,7 @@ public class PostServiceImpl implements PostService {
     }
 
     // delete redundant special characters at the beginning and the end of the string
-    private String removeRedundantChar(String text) {
+    private String removeRedundantChars(String text) {
         while(!Character.isAlphabetic(text.charAt(0))) {
             text = text.substring(1);
         }
@@ -371,5 +369,26 @@ public class PostServiceImpl implements PostService {
         String email = authentication.getName();
         return userRepository.findByEmail(email).orElseThrow(
                 () -> new ResourceNotFoundException("User", "email", email));
+    }
+
+    private void update(Post post, PostDto postDto, String tags) {
+        if (Objects.nonNull(postDto.getTitle()) &&
+                !"".equalsIgnoreCase(postDto.getTitle())) {
+            post.setTitle(postDto.getTitle());
+        }
+        if (Objects.nonNull(postDto.getContent()) &&
+                !"".equalsIgnoreCase(postDto.getContent())) {
+            post.setContent(postDto.getContent());
+        }
+        if (Objects.nonNull(postDto.getCategory())) {
+            post.setCategory(mapper.map(postDto.getCategory(), Category.class));
+        }
+        post.setUpdatedAt(LocalDateTime.now());
+
+        if (tags != null && !"".equalsIgnoreCase(tags)) {
+            // convert String to List
+            List<Tag> tagList = toTagList(tags);
+            post.setTags(tagList);
+        }
     }
 }

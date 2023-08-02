@@ -131,7 +131,7 @@ public class AuthenticationService {
         tokenRepository.saveAll(validUserTokens);
     }
 
-    public void refreshToken(HttpServletRequest request,
+    public JwtAuthResponse refreshToken(HttpServletRequest request,
                              HttpServletResponse response) throws IOException {
         final String authHeader = request.getHeader(HttpHeaders.AUTHORIZATION);
         final String userEmail;
@@ -139,12 +139,14 @@ public class AuthenticationService {
 
         if (!StringUtils.hasText(authHeader)
                 || !authHeader.startsWith("Bearer ")) {
-            return;
+            throw new BlogAPIException(HttpStatus.BAD_REQUEST, "Please log in to get refresh token!");
         }
         refreshToken = authHeader.substring(7);
 
         // get userEmail from jwtToken
         userEmail = jwtService.extractUsername(refreshToken);
+
+        JwtAuthResponse authResponse = null;
 
         // check if email is null and if user is authenticated yet
         if (userEmail != null) {
@@ -156,13 +158,14 @@ public class AuthenticationService {
                 String accessToken = jwtService.generateToken(user);
                 revokeAllUserTokens(user);
                 saveUserToken(user, accessToken);
-                JwtAuthResponse authResponse = JwtAuthResponse.builder()
+                authResponse = JwtAuthResponse.builder()
                         .accessToken(accessToken)
                         .refreshToken(refreshToken)
                         .build();
-                new ObjectMapper().writeValue(response.getOutputStream(), authResponse);
             }
-        } else throw new BlogAPIException(HttpStatus.BAD_REQUEST, "You are not logged in!");
+        } else throw new BlogAPIException(HttpStatus.BAD_REQUEST, "Cannot extract email from the token!");
+
+        return authResponse;
     }
 
     public void forgotPassword(String email) throws MessagingException {

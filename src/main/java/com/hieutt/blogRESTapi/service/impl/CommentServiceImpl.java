@@ -18,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -111,7 +112,10 @@ public class CommentServiceImpl implements CommentService {
 
         // check if comment belongs to user
         if (comment.getAuthor().equals(user)) {
-            comment.setContent(commentDto.getContent());
+            if (Objects.nonNull(commentDto.getContent()) &&
+                    !"".equalsIgnoreCase(comment.getContent())) {
+                comment.setContent(commentDto.getContent());
+            }
             comment.setUpdatedAt(LocalDateTime.now());
         }
         else throw new BlogAPIException(HttpStatus.BAD_REQUEST, "This comment does not belong to this user");

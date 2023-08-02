@@ -30,7 +30,9 @@ public class User implements UserDetails {
     private String username;
     private String email;
     private String password;
+    @ToString.Exclude
     private LocalDateTime createdAt;
+    @ToString.Exclude
     private LocalDateTime updatedAt;
 
     @Enumerated(EnumType.STRING)
@@ -50,6 +52,7 @@ public class User implements UserDetails {
     @ToString.Exclude
     private List<Comment> comments = new ArrayList<>();
 
+    @ToString.Exclude
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_bookmarks",
@@ -64,6 +67,7 @@ public class User implements UserDetails {
     )
     private List<Post> bookmarks = new ArrayList<>();
 
+    @ToString.Exclude
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_likeds",
@@ -78,6 +82,7 @@ public class User implements UserDetails {
     )
     private List<Post> likedPosts = new ArrayList<>();
 
+    @ToString.Exclude
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "user_followers",
@@ -92,7 +97,7 @@ public class User implements UserDetails {
     )
     private List<User> followers = new ArrayList<>();
 
-
+    @ToString.Exclude
     @ManyToMany(mappedBy = "followers", fetch = FetchType.EAGER)
     private List<User> followings = new ArrayList<>();
 
