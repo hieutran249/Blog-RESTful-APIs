@@ -40,6 +40,13 @@ public class SecurityConfig {
                 .authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/api/v1/categories/**").permitAll()
                 .and()
                 .authorizeHttpRequests().requestMatchers(HttpMethod.GET, "/api/v1/users/**").permitAll()
+                .and()
+                .authorizeHttpRequests().requestMatchers(
+                        "/v3/api-docs",
+                        "/v3/api-docs/**",
+                        "/swagger-ui/**",
+                        "/swagger-ui.html"
+                ).permitAll()
                 .anyRequest().authenticated()
                 .and()
                 .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)

@@ -143,7 +143,9 @@ public class PostServiceImpl implements PostService {
     }
 
     @Override
-    public PostResponse getPostsByFollowings(int pageNo, int pageSize, String sortBy, String sortDir, Long userId) {
+    public PostResponse getPostsByFollowings(int pageNo, int pageSize, String sortBy, String sortDir, Long userId, Authentication authentication) {
+        getCurrentUser(authentication);
+
         Pageable pageable = createPage(pageNo, pageSize, sortBy, sortDir);
 
         Page<Post> posts = postRepository.findPostsByFollowings(userId, pageable);
